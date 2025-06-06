@@ -3,10 +3,11 @@ package i18n
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"github.com/nicksnyder/go-i18n/v2/i18n/toml"
+	// "github.com/nicksnyder/go-i18n/v2/i18n/json"
 	"golang.org/x/text/language"
 )
 
@@ -20,7 +21,9 @@ type Localizer struct {
 
 func NewLocalizer(defaultLang language.Tag) (*Localizer, error) {
 	bundle := i18n.NewBundle(defaultLang)
-	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
+	bundle.RegisterUnmarshalFunc("json", func(data []byte, v interface{}) error {
+		return json.Unmarshal(data, v)
+	})
 
 	// Load all translation files
 	entries, err := localesFS.ReadDir("locales")
