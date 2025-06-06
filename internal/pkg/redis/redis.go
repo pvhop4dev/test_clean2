@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"clean-arch-go/internal/pkg/config"
+
 	"github.com/go-redis/redis/v8"
 )
 
@@ -15,7 +16,7 @@ type RedisClient struct {
 
 func NewRedisClient(cfg *config.RedisConfig) (*RedisClient, error) {
 	log.Printf("Connecting to Redis at %s, DB: %d", cfg.Addr, cfg.DB)
-	
+
 	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.Addr,
 		Password: cfg.Password,
@@ -72,7 +73,12 @@ func (r *RedisClient) HDel(ctx context.Context, key string, fields ...string) er
 	return r.client.HDel(ctx, key, fields...).Err()
 }
 
-// Expire sets a timeout on a key
-func (r *RedisClient) Expire(ctx context.Context, key string, expiration time.Duration) (bool, error) {
-	return r.client.Expire(ctx, key, expiration).Result()
+// Incr tăng giá trị của key lên 1 và trả về giá trị mới
+func (r *RedisClient) Incr(ctx context.Context, key string) (int64, error) {
+	return r.client.Incr(ctx, key).Result()
+}
+
+// Expire đặt thời gian hết hạn cho key
+func (r *RedisClient) Expire(ctx context.Context, key string, expiration time.Duration) error {
+	return r.client.Expire(ctx, key, expiration).Err()
 }

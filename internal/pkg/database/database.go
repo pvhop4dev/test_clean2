@@ -18,11 +18,11 @@ type Database struct {
 
 func NewDatabase(cfg *config.DatabaseConfig) (*Database, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName)
+		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name)
 
 	// In ra DSN để debug (không nên làm điều này trong môi trường production)
 	log.Printf("Connecting to database: %s@%s:%s/%s", 
-		cfg.User, cfg.Host, cfg.Port, cfg.DBName)
+		cfg.User, cfg.Host, cfg.Port, cfg.Name)
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),

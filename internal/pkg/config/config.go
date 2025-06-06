@@ -2,18 +2,21 @@ package config
 
 import (
 	"log"
-	"os"
-	"path/filepath"
-	"runtime"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	App      AppConfig
-	Database DatabaseConfig
-	Redis    RedisConfig
-	Rate     RateLimitConfig
+	App       AppConfig       `mapstructure:",squash"`
+	Database  DatabaseConfig  `mapstructure:",squash"`
+	Redis     RedisConfig     `mapstructure:",squash"`
+	JWT       JWTConfig       `mapstructure:",squash"`
+	RateLimit RateLimitConfig `mapstructure:"rate_limit"`
+}
+
+type RateLimitConfig struct {
+	Limit int `mapstructure:"limit"`
+	Burst int `mapstructure:"burst"`
 }
 
 type AppConfig struct {
@@ -28,7 +31,7 @@ type DatabaseConfig struct {
 	Port     string
 	User     string
 	Password string
-	DBName   string
+	Name     string
 }
 
 type RedisConfig struct {
@@ -37,25 +40,31 @@ type RedisConfig struct {
 	DB       int
 }
 
-type RateLimitConfig struct {
-	Limit int
-	Burst int
+type JWTConfig struct {
+	Secret           string
+	ExpirationMinute int
 }
 
 func LoadConfig() *Config {
-	_, b, _, _ := runtime.Caller(0)
-	basepath := filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(b))))
-
-	viper.SetConfigFile(basepath + "/.env")
+	viper.SetConfigFile(".env")
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal("Error reading config file", err)
+		log.Fatalf("Error reading config file, %s", err)
 	}
+
+	// Set default values
+	viper.SetDefault("APP_PORT", "8080")
+	viper.SetDefault("DB_HOST", "localhost")
+	viper.SetDefault("DB_PORT", "3306")
+	viper.SetDefault("REDIS_ADDR", "localhost:6379")
+	viper.SetDefault("REDIS_DB", 0)
+	viper.SetDefault("JWT_EXPIRATION_MINUTE", 1440)
+	viper.SetDefault("RATE_LIMIT", 100)
+	viper.SetDefault("RATE_BURST", 30)
 
 	config := &Config{
 		App: AppConfig{
-			Name:   viper.GetString("APP_NAME"),
 			Env:    viper.GetString("APP_ENV"),
 			Port:   viper.GetString("APP_PORT"),
 			Secret: viper.GetString("APP_SECRET"),
@@ -65,14 +74,18 @@ func LoadConfig() *Config {
 			Port:     viper.GetString("DB_PORT"),
 			User:     viper.GetString("DB_USER"),
 			Password: viper.GetString("DB_PASSWORD"),
-			DBName:   viper.GetString("DB_NAME"),
+			Name:     viper.GetString("DB_NAME"),
 		},
 		Redis: RedisConfig{
 			Addr:     viper.GetString("REDIS_ADDR"),
 			Password: viper.GetString("REDIS_PASSWORD"),
 			DB:       viper.GetInt("REDIS_DB"),
 		},
-		Rate: RateLimitConfig{
+		JWT: JWTConfig{
+			Secret:           viper.GetString("JWT_SECRET"),
+			ExpirationMinute: viper.GetInt("JWT_EXPIRATION_MINUTE"),
+		},
+		RateLimit: RateLimitConfig{
 			Limit: viper.GetInt("RATE_LIMIT"),
 			Burst: viper.GetInt("RATE_BURST"),
 		},

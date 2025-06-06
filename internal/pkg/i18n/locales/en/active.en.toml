@@ -1,0 +1,27 @@
+# English translations
+
+[user]
+not_found = "User not found"
+already_exists = "User already exists"
+created = "User created successfully"
+updated = "User updated successfully"
+deleted = "User deleted successfully"
+
+[auth]
+invalid_credentials = "Invalid email or password"
+login_success = "Login successful"
+register_success = "Registration successful"
+unauthorized = "Unauthorized"
+invalid_token = "Invalid or expired token"
+
+[book]
+not_found = "Book not found"
+created = "Book created successfully"
+updated = "Book updated successfully"
+deleted = "Book deleted successfully"
+
+[validation]
+required = "Field is required"
+email = "Must be a valid email"
+min_length = "Must be at least {{.min}} characters"
+max_length = "Must be at most {{.max}} characters"

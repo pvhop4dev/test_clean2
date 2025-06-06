@@ -16,10 +16,11 @@ type AuthService interface {
 	Register(ctx context.Context, name, email, password string) (*entities.User, error)
 	Login(ctx context.Context, email, password string) (string, error)
 	ValidateToken(tokenString string) (uint, error)
+	GetUserByID(ctx context.Context, id uint) (*entities.User, error)
 }
 
 type authService struct {
-	userRepo     repository.UserRepository
+	userRepo    repository.UserRepository
 	tokenSecret string
 }
 
@@ -105,4 +106,15 @@ func (s *authService) ValidateToken(tokenString string) (uint, error) {
 	}
 
 	return 0, errors.New("invalid token")
+}
+
+// GetUserByID lấy thông tin user theo ID
+func (s *authService) GetUserByID(ctx context.Context, id uint) (*entities.User, error) {
+	user, err := s.userRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	// Ẩn mật khẩu trước khi trả về
+	user.Password = ""
+	return user, nil
 }

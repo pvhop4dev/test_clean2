@@ -1,0 +1,27 @@
+# Vietnamese translations
+
+[user]
+not_found = "Không tìm thấy người dùng"
+already_exists = "Người dùng đã tồn tại"
+created = "Tạo người dùng thành công"
+updated = "Cập nhật người dùng thành công"
+deleted = "Xóa người dùng thành công"
+
+[auth]
+invalid_credentials = "Email hoặc mật khẩu không đúng"
+login_success = "Đăng nhập thành công"
+register_success = "Đăng ký thành công"
+unauthorized = "Không có quyền truy cập"
+invalid_token = "Token không hợp lệ hoặc đã hết hạn"
+
+[book]
+not_found = "Không tìm thấy sách"
+created = "Tạo sách thành công"
+updated = "Cập nhật sách thành công"
+deleted = "Xóa sách thành công"
+
+[validation]
+required = "Trường bắt buộc"
+email = "Phải là email hợp lệ"
+min_length = "Phải có ít nhất {{.min}} ký tự"
+max_length = "Không được vượt quá {{.max}} ký tự"
