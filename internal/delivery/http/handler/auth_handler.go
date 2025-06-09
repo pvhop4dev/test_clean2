@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -57,7 +56,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message": i18n.GetLocalizer().MustTranslate(language.English, translation.AuthRegisterSuccess, nil),
 		"user": AuthResponse{
-			ID:        fmt.Sprintf("%d", user.ID),
+			ID:        user.ID,
 			Name:      user.Name,
 			Email:     user.Email,
 			CreatedAt: user.CreatedAt,
@@ -96,7 +95,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		"message": i18n.GetLocalizer().MustTranslate(language.English, translation.AuthLoginSuccess, nil),
 		"token":   token,
 		"user": AuthResponse{
-			ID:        fmt.Sprintf("%d", user.ID),
+			ID:        user.ID,
 			Name:      user.Name,
 			Email:     user.Email,
 			CreatedAt: user.CreatedAt,
