@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"clean-arch-go/internal/domain/book"
-	"clean-arch-go/internal/domain/entities"
 	"clean-arch-go/internal/pkg/cache"
 )
+
+// Ensure cachedBookRepository implements book.Repository
+var _ book.Repository = (*cachedBookRepository)(nil)
 
 const (
 	bookCacheTTL = 300 // 5 minutes in seconds
@@ -19,6 +21,7 @@ type cachedBookRepository struct {
 	cache cache.Cache
 }
 
+// NewCachedBookRepository creates a new cached book repository
 func NewCachedBookRepository(repo book.Repository, cache cache.Cache) book.Repository {
 	return &cachedBookRepository{
 		repo:  repo,
@@ -26,10 +29,10 @@ func NewCachedBookRepository(repo book.Repository, cache cache.Cache) book.Repos
 	}
 }
 
-func (r *cachedBookRepository) FindByID(ctx context.Context, id string) (*entities.Book, error) {
+func (r *cachedBookRepository) FindByID(ctx context.Context, id string) (*book.Book, error) {
 	cacheKey := fmt.Sprintf(bookCacheKey, id)
 
-	var cachedBook entities.Book
+	var cachedBook book.Book
 	found, err := r.cache.Get(ctx, cacheKey, &cachedBook)
 	if err != nil {
 		return nil, err
@@ -38,7 +41,7 @@ func (r *cachedBookRepository) FindByID(ctx context.Context, id string) (*entiti
 		return &cachedBook, nil
 	}
 
-	b, err := r.repo.GetByID(ctx, id)
+	b, err := r.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -50,24 +53,25 @@ func (r *cachedBookRepository) FindByID(ctx context.Context, id string) (*entiti
 	return b, nil
 }
 
-func (r *cachedBookRepository) FindAll(ctx context.Context, filter book.Filter) ([]*entities.Book, error) {
-	// For simplicity, we'll go to the database directly for filtered queries
+func (r *cachedBookRepository) FindAll(ctx context.Context, filter book.Filter) ([]*book.Book, error) {
 	return r.repo.FindAll(ctx, filter)
 }
 
-func (r *cachedBookRepository) Create(ctx context.Context, book *entities.Book) error {
-	if err := r.repo.Create(ctx, book); err != nil {
+func (r *cachedBookRepository) Create(ctx context.Context, b *book.Book) error {
+	if err := r.repo.Create(ctx, b); err != nil {
 		return err
 	}
-	return nil
+
+	cacheKey := fmt.Sprintf(bookCacheKey, b.ID)
+	return r.cache.Set(ctx, cacheKey, b, bookCacheTTL)
 }
 
-func (r *cachedBookRepository) Update(ctx context.Context, book *entities.Book) error {
-	if err := r.repo.Update(ctx, book); err != nil {
+func (r *cachedBookRepository) Update(ctx context.Context, b *book.Book) error {
+	if err := r.repo.Update(ctx, b); err != nil {
 		return err
 	}
 
-	cacheKey := fmt.Sprintf(bookCacheKey, book.ID)
+	cacheKey := fmt.Sprintf(bookCacheKey, b.ID)
 	return r.cache.Delete(ctx, cacheKey)
 }
 
