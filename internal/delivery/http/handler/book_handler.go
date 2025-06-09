@@ -1,23 +1,17 @@
 package handler
 
 import (
-	"clean-arch-go/internal/domain/entities"
-	"clean-arch-go/internal/domain/service"
 	"net/http"
 	"strconv"
 
+	"clean-arch-go/internal/domain/entities"
+	"clean-arch-go/internal/domain/service"
+	"clean-arch-go/internal/pkg/i18n"
+
+	"golang.org/x/text/language"
+
 	"github.com/gin-gonic/gin"
 )
-
-type BookHandler struct {
-	bookService service.BookService
-}
-
-func NewBookHandler(bookService service.BookService) *BookHandler {
-	return &BookHandler{
-		bookService: bookService,
-	}
-}
 
 type CreateBookRequest struct {
 	Title       string `json:"title" binding:"required"`
@@ -31,11 +25,50 @@ type UpdateBookRequest struct {
 	Author      string `json:"author"`
 }
 
-func (h *BookHandler) CreateBook(c *gin.Context) {
-	// Lấy user ID từ context (đã được set bởi auth middleware)
+type BookHandler struct {
+	bookService service.BookService
+}
+
+func NewBookHandler(bookService service.BookService) *BookHandler {
+	return &BookHandler{
+		bookService: bookService,
+	}
+}
+
+func (h *BookHandler) GetBook(c *gin.Context) {
+	// Get book ID from URL
+	bookID := c.Param("id")
+
+	// Get user ID from context
 	userID, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.unauthorized", nil)})
+		return
+	}
+
+	// Check if the user owns the book
+	if err := h.bookService.CheckBookOwnership(c.Request.Context(), bookID, userID.(string)); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.forbidden", nil)})
+		return
+	}
+
+	book, err := h.bookService.GetBookByID(c.Request.Context(), bookID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.not_found", nil)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": i18n.GetLocalizer().MustTranslate(language.English, "book.get_success", nil),
+		"data":    book,
+	})
+}
+
+func (h *BookHandler) CreateBook(c *gin.Context) {
+	// Get user ID from context
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.unauthorized", nil)})
 		return
 	}
 
@@ -49,29 +82,34 @@ func (h *BookHandler) CreateBook(c *gin.Context) {
 		Title:       req.Title,
 		Description: req.Description,
 		Author:      req.Author,
-		UserID:      userID.(uint),
+		UserID:      userID.(string),
 	}
 
 	if err := h.bookService.CreateBook(c.Request.Context(), book); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.internal_server_error", nil)})
 		return
 	}
 
-	c.JSON(http.StatusCreated, book)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": i18n.GetLocalizer().MustTranslate(language.English, "book.created", nil),
+		"data":    book,
+	})
 }
 
 func (h *BookHandler) UpdateBook(c *gin.Context) {
-	// Lấy book ID từ URL
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid book ID"})
+	// Get book ID from URL
+	bookID := c.Param("id")
+
+	// Get user ID from context
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.unauthorized", nil)})
 		return
 	}
 
-	// Lấy user ID từ context
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	// Check if the user owns the book
+	if err := h.bookService.CheckBookOwnership(c.Request.Context(), bookID, userID.(string)); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.forbidden", nil)})
 		return
 	}
 
@@ -81,14 +119,14 @@ func (h *BookHandler) UpdateBook(c *gin.Context) {
 		return
 	}
 
-	// Lấy thông tin sách hiện tại
-	book, err := h.bookService.GetBookByID(c.Request.Context(), uint(id), userID.(uint))
+	// Get existing book
+	book, err := h.bookService.GetBookByID(c.Request.Context(), bookID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "book not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.not_found", nil)})
 		return
 	}
 
-	// Cập nhật thông tin
+	// Update book fields
 	if req.Title != "" {
 		book.Title = req.Title
 	}
@@ -99,74 +137,64 @@ func (h *BookHandler) UpdateBook(c *gin.Context) {
 		book.Author = req.Author
 	}
 
-	if err := h.bookService.UpdateBook(c.Request.Context(), book); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.bookService.UpdateBook(c.Request.Context(), bookID, book); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.internal_server_error", nil)})
 		return
 	}
 
-	c.JSON(http.StatusOK, book)
-}
-
-func (h *BookHandler) GetBook(c *gin.Context) {
-	// Lấy book ID từ URL
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid book ID"})
-		return
-	}
-
-	// Lấy user ID từ context
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	book, err := h.bookService.GetBookByID(c.Request.Context(), uint(id), userID.(uint))
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "book not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, book)
+	c.JSON(http.StatusOK, gin.H{
+		"message": i18n.GetLocalizer().MustTranslate(language.English, "book.updated", nil),
+		"data":    book,
+	})
 }
 
 func (h *BookHandler) DeleteBook(c *gin.Context) {
-	// Lấy book ID từ URL
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid book ID"})
-		return
-	}
+	// Get book ID from URL
+	bookID := c.Param("id")
 
-	// Lấy user ID từ context
+	// Get user ID from context
 	userID, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.unauthorized", nil)})
 		return
 	}
 
-	if err := h.bookService.DeleteBook(c.Request.Context(), uint(id), userID.(uint)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// Check if the user owns the book
+	if err := h.bookService.CheckBookOwnership(c.Request.Context(), bookID, userID.(string)); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.forbidden", nil)})
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	if err := h.bookService.DeleteBook(c.Request.Context(), bookID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.internal_server_error", nil)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": i18n.GetLocalizer().MustTranslate(language.English, "book.deleted", nil),
+	})
 }
 
 func (h *BookHandler) ListBooks(c *gin.Context) {
-	// Lấy user ID từ context
+	// Get user ID from context
 	userID, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.unauthorized", nil)})
 		return
 	}
 
-	books, err := h.bookService.ListBooksByUserID(c.Request.Context(), userID.(uint))
+	// Get pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	books, err := h.bookService.ListBooksByUserID(c.Request.Context(), userID.(string), page, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": i18n.GetLocalizer().MustTranslate(language.English, "error.internal_server_error", nil)})
 		return
 	}
 
-	c.JSON(http.StatusOK, books)
+	c.JSON(http.StatusOK, gin.H{
+		"message": i18n.GetLocalizer().MustTranslate(language.English, "book.list_success", nil),
+		"data":    books,
+	})
 }

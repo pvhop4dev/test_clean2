@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"clean-arch-go/internal/pkg/config"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -21,7 +22,7 @@ func NewDatabase(cfg *config.DatabaseConfig) (*Database, error) {
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name)
 
 	// In ra DSN để debug (không nên làm điều này trong môi trường production)
-	log.Printf("Connecting to database: %s@%s:%s/%s", 
+	log.Printf("Connecting to database: %s@%s:%s/%s",
 		cfg.User, cfg.Host, cfg.Port, cfg.Name)
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
@@ -51,6 +52,15 @@ func (db *Database) Migrate(models ...interface{}) error {
 }
 
 // WithContext returns a new DB instance with the given context
-func (db *Database) WithContext(ctx context.Context) *gorm.DB {
-	return db.DB.WithContext(ctx)
+func (d *Database) WithContext(ctx context.Context) *gorm.DB {
+	return d.DB.WithContext(ctx)
+}
+
+// Close closes the database connection
+func (d *Database) Close() error {
+	db, err := d.DB.DB()
+	if err != nil {
+		return err
+	}
+	return db.Close()
 }

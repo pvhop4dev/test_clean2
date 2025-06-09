@@ -6,12 +6,21 @@
         "updated": "User updated successfully",
         "deleted": "User deleted successfully"
     },
+    "error": {
+        "invalid_credentials": "Invalid email or password",
+        "email_exists": "Email already exists",
+        "invalid_token": "Invalid or expired token",
+        "unauthorized": "Unauthorized",
+        "not_found": "Resource not found",
+        "internal_server_error": "Internal server error"
+    },
     "auth": {
         "invalid_credentials": "Invalid email or password",
         "login_success": "Login successful",
         "register_success": "Registration successful",
         "unauthorized": "Unauthorized",
-        "invalid_token": "Invalid or expired token"
+        "invalid_token": "Invalid or expired token",
+        "welcome": "Welcome back!"
     },
     "book": {
         "not_found": "Book not found",

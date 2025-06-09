@@ -85,20 +85,24 @@ This is a clean architecture Go project with Gin web framework, gRPC, MySQL, and
 │   └── api/
 │       └── main.go          # Application entry point
 ├── internal/
+│   ├── application/        # Business rules and use cases
+│   │   └── translation/    # Translation use cases
 │   ├── domain/             # Core business logic
-│   │   ├── entities/        # Business entities
-│   │   ├── repository/      # Data access interfaces
-│   │   └── service/         # Business logic
+│   │   ├── entities/       # Business entities
+│   │   └── repository/     # Data access interfaces
 │   ├── delivery/           # Delivery mechanisms
 │   │   ├── http/           # HTTP handlers
 │   │   └── grpc/           # gRPC handlers
-│   ├── middleware/          # HTTP middleware
-│   └── pkg/                 # Reusable packages
+│   ├── middleware/         # HTTP middleware
+│   └── pkg/                # Shared utilities
 │       ├── config/         # Configuration
 │       ├── database/       # Database connection
 │       └── redis/          # Redis client
+├── pkg/                    # External packages and protocols
+│   └── pb/                 # Protocol Buffers definitions
 ├── migrations/             # Database migrations
-├── pkg/                    # External packages
+└── docs/                   # Project documentation
+    └── architecture.md     # Architecture documentation
 │   └── pb/                 # Generated protobuf files
 ├── .env                   # Environment variables
 ├── go.mod                 # Go module definition

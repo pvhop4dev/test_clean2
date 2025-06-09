@@ -49,6 +49,25 @@ dep:
 	go mod download
 
 # Install all tools
+install-tools:
+	go install github.com/golang/mock/mockgen@latest
+	go install github.com/swaggo/swag/cmd/swag@latest
+
+generate-mocks:
+	mockgen -source=internal/domain/translation/repository.go -destination=internal/mocks/translation/repository.go
+	mockgen -source=internal/domain/user/repository.go -destination=internal/mocks/user/repository.go
+	mockgen -source=internal/domain/book/repository.go -destination=internal/mocks/book/repository.go
+
+generate: swagger generate-mocks
+
+# Install dependencies
+dep:
+	go mod download
+
+# Install all tools and generate mocks
+install: install-tools generate-mocks
+
+.PHONY: build run test clean swagger migrate-up migrate-down docker-build docker-up docker-down install-tools generate-mocks generate dep install
 tools: install-migrate
 	go install github.com/swaggo/swag/cmd/swag@latest
 

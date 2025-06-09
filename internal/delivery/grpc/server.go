@@ -1,8 +1,9 @@
 package grpc
 
 import (
-	"clean-arch-go/internal/domain/service"
 	"net"
+
+	"clean-arch-go/internal/domain/service"
 
 	"google.golang.org/grpc"
 )

@@ -7,12 +7,20 @@ created = "Tạo người dùng thành công"
 updated = "Cập nhật người dùng thành công"
 deleted = "Xóa người dùng thành công"
 
+[error]
+invalid_credentials = "Email hoặc mật khẩu không chính xác"
+email_exists = "Email đã tồn tại"
+invalid_token = "Token không hợp lệ hoặc đã hết hạn"
+unauthorized = "Không được phép"
+not_found = "Không tìm thấy tài nguyên"
+internal_server_error = "Lỗi máy chủ"
+
 [auth]
 invalid_credentials = "Email hoặc mật khẩu không đúng"
 login_success = "Đăng nhập thành công"
 register_success = "Đăng ký thành công"
+welcome = "Chào mừng trở lại!"
 unauthorized = "Không có quyền truy cập"
-invalid_token = "Token không hợp lệ hoặc đã hết hạn"
 
 [book]
 not_found = "Không tìm thấy sách"

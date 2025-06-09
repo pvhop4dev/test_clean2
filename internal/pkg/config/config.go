@@ -20,10 +20,11 @@ type RateLimitConfig struct {
 }
 
 type AppConfig struct {
-	Name   string
-	Env    string
-	Port   string
-	Secret string
+	Name        string
+	Env         string
+	Port        string
+	GRPCPort    string
+	Secret      string
 }
 
 type DatabaseConfig struct {
@@ -63,8 +64,14 @@ func LoadConfig() *Config {
 	viper.SetDefault("RATE_LIMIT", 100)
 	viper.SetDefault("RATE_BURST", 30)
 
+	// Set default values for app config
+	viper.SetDefault("APP_NAME", "Clean Arch Go")
+	viper.SetDefault("APP_ENV", "development")
+	viper.SetDefault("APP_SECRET", "your-secret-key")
+
 	config := &Config{
 		App: AppConfig{
+			Name:   viper.GetString("APP_NAME"),
 			Env:    viper.GetString("APP_ENV"),
 			Port:   viper.GetString("APP_PORT"),
 			Secret: viper.GetString("APP_SECRET"),

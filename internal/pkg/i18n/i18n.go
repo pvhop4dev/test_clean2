@@ -1,76 +1,83 @@
+// internal/pkg/i18n/i18n.go
 package i18n
 
 import (
-	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	// "github.com/nicksnyder/go-i18n/v2/i18n/json"
 	"golang.org/x/text/language"
 )
 
 //go:embed locales/*
 var localesFS embed.FS
 
+var (
+	instance *Localizer
+	once     sync.Once
+)
+
+// Localizer is a wrapper around i18n.Localizer with additional functionality
 type Localizer struct {
 	bundle    *i18n.Bundle
 	localizer *i18n.Localizer
+	mu        sync.RWMutex
 }
 
-func NewLocalizer(defaultLang language.Tag) (*Localizer, error) {
-	bundle := i18n.NewBundle(defaultLang)
-	bundle.RegisterUnmarshalFunc("json", func(data []byte, v interface{}) error {
-		return json.Unmarshal(data, v)
-	})
+// GetLocalizer returns the singleton instance of Localizer
+func GetLocalizer() *Localizer {
+	once.Do(func() {
+		defaultLang := language.English
+		bundle := i18n.NewBundle(defaultLang)
+		bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
-	// Load all translation files
-	entries, err := localesFS.ReadDir("locales")
-	if err != nil {
-		return nil, fmt.Errorf("failed to read locales directory: %w", err)
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-
-		data, err := localesFS.ReadFile(fmt.Sprintf("locales/%s", entry.Name()))
+		// Load all translation files
+		entries, err := localesFS.ReadDir("locales")
 		if err != nil {
-			return nil, fmt.Errorf("failed to read locale file %s: %w", entry.Name(), err)
+			panic(fmt.Sprintf("failed to read locales directory: %v", err))
 		}
 
-		if _, err := bundle.ParseMessageFileBytes(data, entry.Name()); err != nil {
-			return nil, fmt.Errorf("failed to parse locale file %s: %w", entry.Name(), err)
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				_, err := bundle.LoadMessageFileFS(localesFS, "locales/"+entry.Name())
+				if err != nil {
+					panic(fmt.Sprintf("failed to load message file %s: %v", entry.Name(), err))
+				}
+			}
 		}
-	}
 
-	return &Localizer{
-		bundle:    bundle,
-		localizer: i18n.NewLocalizer(bundle, defaultLang.String()),
-	}, nil
+		instance = &Localizer{
+			bundle:    bundle,
+			localizer: i18n.NewLocalizer(bundle, defaultLang.String()),
+		}
+	})
+	return instance
 }
 
-func (l *Localizer) SetLanguage(lang string) {
-	l.localizer = i18n.NewLocalizer(l.bundle, lang)
+// SetLanguage changes the language of the localizer
+func (l *Localizer) SetLanguage(lang language.Tag) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.localizer = i18n.NewLocalizer(l.bundle, lang.String())
 }
 
-func (l *Localizer) Translate(ctx context.Context, messageID string, templateData map[string]interface{}) (string, error) {
-	acceptLang := ctx.Value("Accept-Language")
-	if acceptLang != nil {
-		if lang, ok := acceptLang.(string); ok && lang != "" {
-			l.SetLanguage(lang)
-		}
-	}
-
+// Translate translates a message with the given ID and template data
+func (l *Localizer) Translate(lang language.Tag, messageID string, templateData map[string]interface{}) (string, error) {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
 	return l.localizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageID,
 		TemplateData: templateData,
 	})
 }
 
-// Helper function to create a new localizer with default settings
-func NewDefaultLocalizer() (*Localizer, error) {
-	return NewLocalizer(language.English)
+// MustTranslate translates a message or panics if there's an error
+func (l *Localizer) MustTranslate(lang language.Tag, messageID string, templateData map[string]interface{}) string {
+	msg, err := l.Translate(lang, messageID, templateData)
+	if err != nil {
+		panic(fmt.Sprintf("failed to translate message %s: %v", messageID, err))
+	}
+	return msg
 }

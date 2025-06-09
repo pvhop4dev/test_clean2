@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"clean-arch-go/internal/pkg/redis"
 	"context"
 	"net/http"
 	"time"
+
+	"clean-arch-go/internal/pkg/redis"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
