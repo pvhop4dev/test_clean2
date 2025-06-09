@@ -1,4 +1,226 @@
 basePath: /api
+definitions:
+  handler.BookInput:
+    properties:
+      author:
+        description: |-
+          Author of the book
+          required: true
+          example: Alan A. A. Donovan, Brian W. Kernighan
+        type: string
+      description:
+        description: |-
+          Description of the book
+          example: The Go Programming Language is the authoritative resource for any programmer who wants to learn Go.
+        type: string
+      published_year:
+        description: |-
+          Published year of the book
+          example: 2015
+        type: integer
+      title:
+        description: |-
+          Title of the book
+          required: true
+          example: The Go Programming Language
+        type: string
+    required:
+    - author
+    - title
+    type: object
+  handler.BookResponse:
+    properties:
+      author:
+        description: |-
+          Author of the book
+          example: Alan A. A. Donovan, Brian W. Kernighan
+        type: string
+      created_at:
+        description: |-
+          CreatedAt timestamp
+          example: 2023-01-01T00:00:00Z
+        type: string
+      description:
+        description: |-
+          Description of the book
+          example: The Go Programming Language is the authoritative resource for any programmer who wants to learn Go.
+        type: string
+      id:
+        description: |-
+          ID of the book
+          example: 507f1f77bcf86cd799439011
+        type: string
+      published_year:
+        description: |-
+          Published year of the book
+          example: 2015
+        type: integer
+      title:
+        description: |-
+          Title of the book
+          example: The Go Programming Language
+        type: string
+      updated_at:
+        description: |-
+          UpdatedAt timestamp
+          example: 2023-01-01T00:00:00Z
+        type: string
+    type: object
+  handler.BooksListResponse:
+    properties:
+      data:
+        description: List of books
+        items:
+          $ref: '#/definitions/handler.BookResponse'
+        type: array
+      total:
+        description: |-
+          Total number of books
+          example: 42
+        type: integer
+    type: object
+  handler.ErrorResponse:
+    properties:
+      error:
+        description: |-
+          Error message
+          example: Invalid credentials
+        type: string
+    type: object
+  handler.LanguagesResponse:
+    properties:
+      languages:
+        description: |-
+          List of supported language codes (ISO 639-1)
+          example: ["en", "vi", "fr", "es"]
+        items:
+          type: string
+        type: array
+    type: object
+  handler.LoginInput:
+    properties:
+      email:
+        description: |-
+          Email of the user
+          required: true
+          example: user@example.com
+        type: string
+      password:
+        description: |-
+          Password of the user
+          required: true
+          minLength: 8
+          example: password123
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handler.RegisterInput:
+    properties:
+      email:
+        description: |-
+          Email of the user
+          required: true
+          example: user@example.com
+        type: string
+      name:
+        description: |-
+          Name of the user
+          required: true
+          minLength: 2
+          example: John Doe
+        minLength: 2
+        type: string
+      password:
+        description: |-
+          Password of the user
+          required: true
+          minLength: 8
+          example: password123
+        minLength: 8
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  handler.TokenResponse:
+    properties:
+      access_token:
+        description: |-
+          JWT access token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      expires_in:
+        description: |-
+          Expiration time in seconds
+          example: 3600
+        type: integer
+      token_type:
+        description: |-
+          Type of token
+          example: bearer
+        type: string
+    type: object
+  handler.TranslateInput:
+    properties:
+      source_lang:
+        description: |-
+          Source language code (ISO 639-1)
+          example: en
+        type: string
+      target_lang:
+        description: |-
+          Target language code (ISO 639-1)
+          required: true
+          example: vi
+        type: string
+      text:
+        description: |-
+          Text to translate
+          required: true
+          example: Hello, world!
+        type: string
+    required:
+    - target_lang
+    - text
+    type: object
+  handler.TranslateResponse:
+    properties:
+      source_lang:
+        description: |-
+          Source language code (ISO 639-1)
+          example: en
+        type: string
+      target_lang:
+        description: |-
+          Target language code (ISO 639-1)
+          example: vi
+        type: string
+      text:
+        description: |-
+          Translated text
+          example: Xin chào thế giới!
+        type: string
+    type: object
+  user.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
 host: localhost:8080
 info:
   contact:
@@ -12,9 +234,253 @@ info:
   termsOfService: http://swagger.io/terms/
   title: Clean Architecture Go API
   version: "1.0"
-paths: {}
+paths:
+  /api/books:
+    get:
+      description: Get a paginated list of books
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved books
+          schema:
+            $ref: '#/definitions/handler.BooksListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all books
+      tags:
+      - books
+    post:
+      consumes:
+      - application/json
+      description: Create a new book with the provided information
+      parameters:
+      - description: Book data
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/handler.BookInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created book
+          schema:
+            $ref: '#/definitions/handler.BookResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new book
+      tags:
+      - books
+  /api/books/{id}:
+    get:
+      description: Get detailed information about a specific book
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved book
+          schema:
+            $ref: '#/definitions/handler.BookResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Book not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a book by ID
+      tags:
+      - books
+  /api/translations/languages:
+    get:
+      description: Get a list of all supported languages for translation
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved supported languages
+          schema:
+            $ref: '#/definitions/handler.LanguagesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get supported languages
+      tags:
+      - translations
+  /api/translations/translate:
+    post:
+      consumes:
+      - application/json
+      description: Translate text from source language to target language
+      parameters:
+      - description: Translation input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.TranslateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully translated text
+          schema:
+            $ref: '#/definitions/handler.TranslateResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Translation service error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Translate text
+      tags:
+      - translations
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return a JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully authenticated
+          schema:
+            $ref: '#/definitions/handler.TokenResponse'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: User login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with the provided information
+      parameters:
+      - description: User registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully registered user
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: Email already exists
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /health:
+    get:
+      consumes:
+      - '*/*'
+      description: get the status of server.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Show the status of server.
+      tags:
+      - root
 securityDefinitions:
   ApiKeyAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+  BasicAuth:
+    type: basic
+  BearerAuth:
     description: Type "Bearer" followed by a space and JWT token.
     in: header
     name: Authorization

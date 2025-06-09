@@ -40,6 +40,11 @@ docker-down:
 docker-logs:
 	docker-compose logs -f
 
+docker-full:
+	docker-compose down
+	docker-compose up --build -d
+	docker-compose logs -f
+
 # Install migration tool
 install-migrate:
 	go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest

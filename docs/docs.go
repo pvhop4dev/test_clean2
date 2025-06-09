@@ -23,14 +23,608 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {},
+    "paths": {
+        "/api/books": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a paginated list of books",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "List all books",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved books",
+                        "schema": {
+                            "$ref": "#/definitions/handler.BooksListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new book with the provided information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Create a new book",
+                "parameters": [
+                    {
+                        "description": "Book data",
+                        "name": "book",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.BookInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created book",
+                        "schema": {
+                            "$ref": "#/definitions/handler.BookResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/books/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get detailed information about a specific book",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Get a book by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved book",
+                        "schema": {
+                            "$ref": "#/definitions/handler.BookResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/translations/languages": {
+            "get": {
+                "description": "Get a list of all supported languages for translation",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "translations"
+                ],
+                "summary": "Get supported languages",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved supported languages",
+                        "schema": {
+                            "$ref": "#/definitions/handler.LanguagesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/translations/translate": {
+            "post": {
+                "description": "Translate text from source language to target language",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "translations"
+                ],
+                "summary": "Translate text",
+                "parameters": [
+                    {
+                        "description": "Translation input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.TranslateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully translated text",
+                        "schema": {
+                            "$ref": "#/definitions/handler.TranslateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Translation service error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Authenticate a user and return a JWT token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "User login",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/handler.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Create a new user account with the provided information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "User registration data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.RegisterInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully registered user",
+                        "schema": {
+                            "$ref": "#/definitions/user.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Email already exists",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "get the status of server.",
+                "consumes": [
+                    "*/*"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "root"
+                ],
+                "summary": "Show the status of server.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.BookInput": {
+            "type": "object",
+            "required": [
+                "author",
+                "title"
+            ],
+            "properties": {
+                "author": {
+                    "description": "Author of the book\nrequired: true\nexample: Alan A. A. Donovan, Brian W. Kernighan",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description of the book\nexample: The Go Programming Language is the authoritative resource for any programmer who wants to learn Go.",
+                    "type": "string"
+                },
+                "published_year": {
+                    "description": "Published year of the book\nexample: 2015",
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "Title of the book\nrequired: true\nexample: The Go Programming Language",
+                    "type": "string"
+                }
+            }
+        },
+        "handler.BookResponse": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "description": "Author of the book\nexample: Alan A. A. Donovan, Brian W. Kernighan",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "CreatedAt timestamp\nexample: 2023-01-01T00:00:00Z",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description of the book\nexample: The Go Programming Language is the authoritative resource for any programmer who wants to learn Go.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the book\nexample: 507f1f77bcf86cd799439011",
+                    "type": "string"
+                },
+                "published_year": {
+                    "description": "Published year of the book\nexample: 2015",
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "Title of the book\nexample: The Go Programming Language",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "UpdatedAt timestamp\nexample: 2023-01-01T00:00:00Z",
+                    "type": "string"
+                }
+            }
+        },
+        "handler.BooksListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "List of books",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.BookResponse"
+                    }
+                },
+                "total": {
+                    "description": "Total number of books\nexample: 42",
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error message\nexample: Invalid credentials",
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LanguagesResponse": {
+            "type": "object",
+            "properties": {
+                "languages": {
+                    "description": "List of supported language codes (ISO 639-1)\nexample: [\"en\", \"vi\", \"fr\", \"es\"]",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "handler.LoginInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "description": "Email of the user\nrequired: true\nexample: user@example.com",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "Password of the user\nrequired: true\nminLength: 8\nexample: password123",
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
+        "handler.RegisterInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "description": "Email of the user\nrequired: true\nexample: user@example.com",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the user\nrequired: true\nminLength: 2\nexample: John Doe",
+                    "type": "string",
+                    "minLength": 2
+                },
+                "password": {
+                    "description": "Password of the user\nrequired: true\nminLength: 8\nexample: password123",
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
+        "handler.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "description": "JWT access token\nexample: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "type": "string"
+                },
+                "expires_in": {
+                    "description": "Expiration time in seconds\nexample: 3600",
+                    "type": "integer"
+                },
+                "token_type": {
+                    "description": "Type of token\nexample: bearer",
+                    "type": "string"
+                }
+            }
+        },
+        "handler.TranslateInput": {
+            "type": "object",
+            "required": [
+                "target_lang",
+                "text"
+            ],
+            "properties": {
+                "source_lang": {
+                    "description": "Source language code (ISO 639-1)\nexample: en",
+                    "type": "string"
+                },
+                "target_lang": {
+                    "description": "Target language code (ISO 639-1)\nrequired: true\nexample: vi",
+                    "type": "string"
+                },
+                "text": {
+                    "description": "Text to translate\nrequired: true\nexample: Hello, world!",
+                    "type": "string"
+                }
+            }
+        },
+        "handler.TranslateResponse": {
+            "type": "object",
+            "properties": {
+                "source_lang": {
+                    "description": "Source language code (ISO 639-1)\nexample: en",
+                    "type": "string"
+                },
+                "target_lang": {
+                    "description": "Target language code (ISO 639-1)\nexample: vi",
+                    "type": "string"
+                },
+                "text": {
+                    "description": "Translated text\nexample: Xin chào thế giới!",
+                    "type": "string"
+                }
+            }
+        },
+        "user.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        }
+    },
     "securityDefinitions": {
         "ApiKeyAuth": {
             "description": "Type \"Bearer\" followed by a space and JWT token.",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
+        },
+        "BasicAuth": {
+            "type": "basic"
+        },
+        "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
+    },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api/"
     }
 }`
 
